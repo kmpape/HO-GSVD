@@ -1,6 +1,4 @@
-clear all
-close all
-clc
+addpath('../')
 
 %% Prepare data
 label_names = load('batches.meta.mat', 'label_names');

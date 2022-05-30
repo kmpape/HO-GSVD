@@ -1,6 +1,4 @@
-clc
-clear all
-close all
+addpath('../')
 
 % Create a rank-deficient dataset
 N = 3;
