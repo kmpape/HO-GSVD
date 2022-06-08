@@ -1,48 +1,27 @@
-function [U, S, V, Tau, T, taumin, taumax] = hogsvd(A, N, m, n, ppi, RANK_TOL_A,...
-                                    ZEROTOL, eps_rel_iso, eps_svd_iso)
-% [U, S, V, Tau, T, taumin, taumax] = hogsvd(A, N, m, n, ppi, RANK_TOL_A, ZEROTOL, eps_rel_iso, eps_svd_iso)
+function [U, S, V, Q, R, Z, Tau, T, taumin, taumax, m] = hogsvd(A, N, m, n, varargin)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% [U, S, V, Q, R, Z, Tau, T, taumin, taumax] = hogsvd(A, N, m, n, varargin)
 %
 % Computes the HO-GSVD of N matrices with A=[A1; A2; ...; AN] and Ai of
-% size m(i) x n. If rank(A)<n, the matrix A is padded. The double RANK_TOL_A
-% is used to determine the rank of A.
-%
-% This function is based on the HO-CSD implementation. For the optional
-% arguments ZEROTOL, eps_rel_iso, eps_svd_iso see hocsd(...).
-%
-% Returns U, S, Vs such that Ai=Ui*Si*V' with
+% size m(i) x n. If rank(A)<n, the matrix A is padded. 
+% Returns U, S, V such that Ai=Ui*Si*V' with
 % Ui=U(1+sum(m(1:i-1)):sum(m(1:i)),:) and Si=S(1+n*(i-1):n*i,:).
 %
-% Also returns T from the HO-CSD, and the eigenvalues of T, Tau, and the
-% theoretical boundaries on the eigenvalues of T, taumin and taumax.
-    if ~exist('RANK_TOL_A','var')
-        RANK_TOL_A = 1e-14;
-    else
-        if RANK_TOL_A<0, error('Expected RANK_TOL_A>=0, received RANK_TOL_A=%.4f', RANK_TOL_A), end
-    end
-    if ~exist('ppi','var')
-        ppi = [];
-    else
-        if ppi<=0, error('Expected ppi>0, received ppi=%.4f', ppi), end
-    end
-    if (~exist('ZEROTOL','var') || isempty(ZEROTOL))
-        ZEROTOL = [];
-    end
-    if ~exist('eps_rel_iso','var')
-        eps_rel_iso = [];
-    else
-        if (eps_rel_iso<0 || eps_rel_iso>1), error('Expected eps_rel_iso=%.4f in [0,1]', eps_rel_iso), end
-    end
-    if ~exist('eps_svd_iso','var')
-        eps_svd_iso = [];
-    else
-        if (eps_svd_iso<0 || eps_svd_iso>1), error('Expected eps_svd_iso=%.4f in [0,1]', eps_svd_iso), end
-    end
-    if length(m)~=N, error('Expected length(m) == N'), end
-    if size(A, 1)~=sum(m), error('Expected size(Aall, 1) == sum(m)'), end
-    if size(A, 2)~=n, error('Expected size(Aall, 2) == n'), end
+% Optional keyword arguments:
+% ppi, RANK_TOL_A, ZEROTOL, EPS_REL_ISO, EPS_SVD_ISO
+%
+% Also returns the HO-CSD Qi=Ui*Si*Z', T and the eigenvalues of T, Tau, and
+% the theoretical boundaries on the eigenvalues of T, taumin and taumax.
+% The matrix Z is orthogonal.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    if length(m)~=N, error('length(m)=%d ~= N=%d',length(m),N), end
+    if sum(m)<n, error('sum(m)=%d < n=%d',sum(m),n), end
+    if size(A,1)~=sum(m), error('size(A,1)=%d ~= sum(m)=%d',size(A,1),sum(m)), end
+    if size(A,2)~=n, error('size(A,2)=%d ~= n=%d',size(A,2),n), end
+    args = parse_args(N, varargin{:});
     
     SA = svd(A);
-    rank_A = sum(SA > RANK_TOL_A);
+    rank_A = sum(SA > args.RANK_TOL_A);
     rank_def_A = n - rank_A;
     if rank_def_A == 0
         Apad = A;
@@ -53,14 +32,29 @@ function [U, S, V, Tau, T, taumin, taumax] = hogsvd(A, N, m, n, ppi, RANK_TOL_A,
         N = N + 1;
         m =[m, rank_def_A];
         SApad = svd(Apad);
-        assert(sum(SApad >= RANK_TOL_A)==n);
+        assert(sum(SApad >= args.RANK_TOL_A)==n);
     end
     [Q, R] = qr(Apad, 0);
-    [U, S, Z, Tau, T, taumin, taumax] = hocsd(Q, N, m, n, ppi, ZEROTOL, eps_rel_iso, eps_svd_iso);
+    [U, S, Z, Tau, T, taumin, taumax] = hocsd(Q, N, m, n,...
+        'ppi', args.ppi, 'ZEROTOL', args.ZEROTOL,...
+        'EPS_REL_ISO', args.EPS_REL_ISO, 'EPS_SVD_ISO', args.EPS_SVD_ISO);
     V = R'*Z;
     
-    if false && (rank_def_A>0)
+    if false && (rank_def_A>0) % remove padding
         U(end+1-rank_def_A:end,:) = [];
         S(end-n+1:end,:) = [];
     end
+end
+
+function args = parse_args(N, varargin)
+    check_TOL = @(x) (x>0);
+    check_EPS = @(x) ((x>0) && (x<1));
+    p = inputParser;
+    addParameter(p, 'ppi', 1/N, check_TOL);
+    addParameter(p, 'ZEROTOL', 1e-14, check_TOL);
+    addParameter(p, 'EPS_REL_ISO', 1e-6, check_EPS);
+    addParameter(p, 'EPS_SVD_ISO', 1e-6, check_EPS);
+    addParameter(p, 'RANK_TOL_A', 1e-14, check_TOL);
+    parse(p, varargin{:});
+    args = p.Results;
 end
