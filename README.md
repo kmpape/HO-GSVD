@@ -1,4 +1,4 @@
-# HO-GSVD
+# Higher-Order Generalized Singular Value Decomposition
 Experimental Matlab implementation of the Higher-Order Generalized Singular Value (HO-GSVD) Decomposition. The implementation is based on the paper
 "A Higher-Order Generalized Singular Value Decomposition for Rank Deficient Matrices" by Idris Kempf, Paul J. Goulart and Stephen R. Duncan. A pre-print
 of the paper can be found at https://arxiv.org/abs/2102.09822.
