@@ -4,7 +4,8 @@ Experimental Matlab implementation of the Higher-Order Generalized Singular Valu
 of the paper can be found at https://arxiv.org/abs/2102.09822.
 
 The HO-GSVD is an extension of the standard SVD to $N\geq 2$ matrices. Given $N$ matrices $A_1,\dots,A_N$, the HO-GSVD decomposes each $A_i$ as $A_i=U_i\Sigma_i V^\text{T}$, $i = 1,\dots,N$, where $U_i\in\mathbb{R}^{m_i \times n}$ are the matrices of right basis vectors, 
-the diagonal matrix $\Sigma_i\succeq 0$ contains the generalized singular values $\sigma_{i,k}$, 
+the diagonal matrix $\Sigma_i\succeq 0$ contains the generalized singular values 
+$\sigma_{i,k}$, 
 and $V\in\mathbb{R}^{n\times n}$ with 
 $\text{det}(V)\neq 0$ is the matrix of right basis vectors being shared among all factorizations. 
 
