@@ -23,13 +23,13 @@ subplot(N+1+is_padded,1,1);
 plot(1:n, (diag(Tau)-taumin)./(taumax-taumin),...
     'k--','Marker','d','MarkerFaceColor','k','MarkerEdgeColor','k');
 title('Eigenvalues of T relative to \tau_{min} and \tau_{max}')
-xlim([1 n]);
-ylim([0 1]);
+xticks(1:1:n); xlim([1 n]); ylim([0 1]);
 for i = 1 : N+is_padded
     subplot(N+1+is_padded, 1, i+1);
     Si = S(1+(i-1)*n : i*n, :);
     plot(1:n,diag(Si),...
         'k--','Marker','d','MarkerFaceColor','k','MarkerEdgeColor','k');
+    xticks(1:1:n);
     xlim([1 n]);
     ylim([0 1]);
     if is_padded && (i==N+is_padded)
@@ -52,7 +52,7 @@ for i=1:N
 end
 
 % Call the HO-GSVD (which calls the HO-CSD after padding A)
-[~, S, V, ~, ~, ~, Tau, ~, taumin, taumax, mpad] = hogsvd(A, N, m, n);
+[~, S, V, ~, ~, ~, Tau, ~, taumin, taumax, mpad] = hogsvd(A, N, m, n, 'ACCELERATE', true);
 
 if length(mpad) > length(m)
     N = N+1;
@@ -64,14 +64,11 @@ subplot(N+1,1,1);
 plot(1:n, (diag(Tau)-taumin)./(taumax-taumin),...
     'k--','Marker','d','MarkerFaceColor','k','MarkerEdgeColor','k');
 title('Eigenvalues of T relative to \tau_{min} and \tau_{max}')
-xlim([1 n]);
-ylim([0 1]);
+xticks(1:1:n); xlim([1 n]); ylim([0 1]);
 for i = 1 : N
     subplot(N+1, 1, i+1);
     Si = S(1+(i-1)*n : i*n, :);
     plot(1:n,diag(Si),...
         'k--','Marker','d','MarkerFaceColor','k','MarkerEdgeColor','k');
-    xlim([1 n]);
-    ylim([0 1]);
-    title(sprintf('HO-GSVs of A_%d',i));
+    xticks(1:1:n); xlim([1 n]); ylim([0 1]); title(sprintf('HO-GSVs of A_%d',i));
 end

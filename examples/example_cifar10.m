@@ -5,124 +5,121 @@ clc
 
 %% Prepare data
 label_names = load('batches.meta.mat', 'label_names');
-class_index = uint8([4, 5, 6, 7] - 1); %! cat,deer,dog,frog
+%class_index = uint8([1, 2, 3, 4, 9, 10] - 1); 
 class_index = uint8([2, 4, 9, 10] - 1); %! automobile,cat,ship,truck
 classes = label_names.label_names(class_index+1);
 N = length(class_index);
 load('data_batch_1.mat', 'labels', 'data');
 nsamples = length(labels);
-max_per_class = sum(repmat(labels,[1 N])==repmat(class_index,[nsamples 1]),1);
+m = sum(repmat(labels,[1 N])==repmat(class_index,[nsamples 1]),1);
 
-n_pxl_x = 32;
-n_pxl_y = 32;
-n = n_pxl_x*n_pxl_y*3;
+nx = 32;
+ny = 32;
+n = nx*ny*3;
 
-min_m_class = 600;
-max_m_class = 900;
-m = [888   890   647   892]; % randi([min_m_class,max_m_class],[1,N]);
-mb = max_per_class - m;
-
-A = zeros(sum(m), n);   % Training set
-B = zeros(sum(mb), n);  % Test set
-test_labels = zeros(sum(mb), 1);
+A = zeros(sum(m), n);
 for i = 1:N
     data_class = data(labels == class_index(i),:);
+    Ai = double(data_class(1:m(i),:))/255;
+    fprintf("rank(A_%d)=%d, m_%d=%d\n", i, sum(svd(Ai)>1e-14), i, m(i));
     A(1+sum(m(1:i-1)):sum(m(1:i-1))+m(i),:) = double(data_class(1:m(i),:))/255;
-    B(1+sum(mb(1:i-1)):sum(mb(1:i-1))+mb(i),:) = double(data_class(m(i)+1:end,:))/255;
-    test_labels(1+sum(mb(1:i-1)):sum(mb(1:i-1))+mb(i)) = i;
 end
 
-%% Call the HO-GSVD (which calls the HO-CSD after padding A)
-[U, S, V, Q, R, Z, Tau, T, taumin, taumax, mpad] = hogsvd(A, N, m, n);
-
-is_pad = length(mpad)>length(m);
-if is_pad, classes{end+1}='padding'; end
-if is_pad, N=N+1; end
+%% Call the HO-GSVD 
+[U, S, V, Q, R, Z, Tau, T, taumin, taumax, mpad, iso_classes] = hogsvd(A, N, m, n,...
+    'ACCELERATE', true);
 
 %% Plot the generalized singular values and the eigenvalues of T
+nplot = n;
 figure;
 subplot(N+1,1,1);
-plot(1:n, (diag(Tau)-taumin)./(taumax-taumin), 'k-');
+plot(1:nplot, (diag(Tau(1:nplot,1:nplot))-taumin)./(taumax-taumin), 'k-');
 title('Eigenvalues of T relative to \tau_{min} and \tau_{max}')
-xlim([1 n]);
+xlim([1 nplot]);
 ylim([0 1]);
 for i = 1 : N
     subplot(N+1, 1, i+1);
     Si = S(1+(i-1)*n : i*n, :);
-    plot(1:n,diag(Si),'k-');
-    xlim([1 n]);
+    plot(1:nplot,diag(Si(1:nplot,1:nplot)),'k-'); % .*(vecnorm(V,2,1)')
+    xlim([1 nplot]);
     ylim([0 1]);
     title(sprintf('HO-GSVs of A_%d (%s)',i,classes{i}));
 end
 
-if true
-    addpath('/home/idris/Documents/EngSci/Matlab/my_functions/')
-    cols = {};
-    data = zeros(n,N+2);
-    data(:,1) = 1:n; cols{end+1} = 'n';
-    data(:,2) = (diag(Tau)-taumin)./(taumax-taumin); cols{end+1} = 'tau';
-    for i=1:N
-        data(:,2+i) = diag(S(1+(i-1)*n : i*n, :));  cols{end+1} = classes{i};
-    end
-    csvwrite_with_headers(['gsvs_',classes{:},'.csv'],data,cols);
+%% Visualise left basis vectors for selected images
+ij_pairs = [16,19,40,50];
+figure;
+for i=1:N
+    iso_inds_noti = find(iso_classes ~= i);
+    inds_Ui = 1+sum(m(1:i-1)):sum(m(1:i));
+    Ui = U(inds_Ui,:);
+    Ui(:,iso_inds_noti) = 0.0;
+    plot(Ui(ij_pairs(i),:)); hold on;
+end
+
+%% Visualise right basis vectors with largest weight for image j
+ijk_triples = [20,82,203,278];
+
+for i=1:length(ijk_triples)
+    figure
+    imshow(imrotate(abs(reshape(V(:,ijk_triples(i)),[nx ny 3])),-90), 'Border','tight');
 end
 
 %% Visualize Reconstruction
-j=10;
+ij_pairs = [16,19,40,50];
 figure;
-if is_pad, i_plot=length(classes)-1; else, i_plot=length(classes); end
-for i=1:i_plot
+for i=1:N
+    j = ij_pairs(i);
     inds_Si = 1+(i-1)*n:i*n;
     inds_Ui = 1+sum(m(1:i-1)):sum(m(1:i));
     Si = S(inds_Si,:);
     Ui = U(inds_Ui,:);
     Ai = A(inds_Ui,:);
-    
-    inds_iso = diag(Si) >= 1-1e-12;
-    Ui_iso = Ui(:,inds_iso);
-    Vi_iso = V(:,inds_iso);
+
+    iso_inds_i = find(iso_classes == i);
+    Ui_iso = Ui(:,iso_inds_i);
+    Vi_iso = V(:,iso_inds_i);
     Ai_iso = Ui_iso*Vi_iso';
-    n_iso = size(Vi_iso,2);
-    
-    [~,inds] = sort(vecnorm(Vi_iso,2,1), 'descend');
-    inds = inds(1:300);
-    Ai_iso_maxnorm = Ui_iso(:,inds)*Vi_iso(:,inds)';
-    
-    subplot(4,length(classes),i);
-    imshow(imrotate(abs(reshape(Ai(j,:),[n_pxl_x n_pxl_y 3])),-90))
+
+    subplot(2,length(classes),i);
+    imshow(imrotate(abs(reshape(Ai(j,:),[nx ny 3])),-90))
     title(sprintf('%s',classes{i}));
-    subplot(4,length(classes),i+length(classes));
-    imshow(imrotate(abs(reshape(Ai_iso(j,:),[n_pxl_x n_pxl_y 3])),-90))
-    title(sprintf('Isolated Subspace'));
-    subplot(4,length(classes),i+2*length(classes));
-    imshow(imrotate(abs(reshape(Ai_iso_maxnorm(j,:),[n_pxl_x n_pxl_y 3])),-90))
+    subplot(2,length(classes),i+length(classes));
+    imshow(imrotate(abs(reshape(Ai_iso(j,:),[nx ny 3])),-90))
     title(sprintf('Isolated Subspace'));
 end
 
-%% Classify: Select some vectors from each isolated subspace
-guesses = zeros(sum(mb),1);
-score = zeros(sum(mb),N);
-
+%% Create a new A that has a common subspace
+Anew = zeros(size(A));
 for i = 1:N
-    Si = S(1+(i-1)*n : i*n, :);
-    iso = diag(Si) >= 1-1e-12;
-    V_iso = V(:,iso);
-    Ui_iso = U(1+sum(m(1:i-1)):sum(m(1:i)),iso);
-    n_iso = size(Vi_iso,2);
-    
-    % select by V_iso
-    [~,inds] = sort(vecnorm(V_iso,2,1), 'descend');
-    inds = inds(1:end);
-    
-    V_iso_inds = V_iso(:,inds);
-    oracle = pinv(V_iso_inds')*V_iso_inds';
-    for j=1:size(B,1) % B(j,:) = x*V_iso_inds'
-        score(j,i) = norm(B(j,:)-B(j,:)*oracle);
-    end
+    Ai = A(1+sum(m(1:i-1)):sum(m(1:i-1))+m(i),:);    
+    Ai(1,1) = 0.5;
+    Ai(2:end,1) = 0.0;
+    Ai(1,2:end) = 0.0;    
+    Anew(1+sum(m(1:i-1)):sum(m(1:i-1))+m(i),:) = Ai;
 end
 
-for j=1:sum(mb)
-    guesses(j) = find(score(j,:) == min(score(j,:)));
+%% Call the HO-GSVD on the new dataset
+[U_new, S_new, V_new, Q_new, R_new, Z_new, Tau_new, T_new, taumin_new, taumax_new, mpad_new, iso_classes_new] = hogsvd(Anew, N, m, n,...
+    'ACCELERATE', true);
+
+%% Plot the generalized singular values and the eigenvalues of T
+nplot = n;
+figure;
+subplot(N+1,1,1);
+plot(1:nplot, (diag(Tau_new(1:nplot,1:nplot))-taumin_new)./(taumax_new-taumin_new), 'k-');
+title('Eigenvalues of modified T relative to \tau_{min} and \tau_{max}')
+xlim([1 nplot]);
+ylim([0 1]);
+for i = 1 : N
+    subplot(N+1, 1, i+1);
+    Si = S_new(1+(i-1)*n : i*n, :);
+    plot(1:nplot,diag(Si(1:nplot,1:nplot)),'k-'); % .*(vecnorm(V,2,1)')
+    xlim([1 nplot]);
+    ylim([0 1]);
+    title(sprintf('HO-GSVs of A_%d (%s)',i,classes{i}));
 end
 
-sum(test_labels == guesses)/sum(mb)*100
+
+
+
