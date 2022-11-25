@@ -14,7 +14,7 @@ If you use the HO-GSVD for published work, we encourage you to cite the accompan
 ```
 
 # hogsvd.m
-The HO-GSVD decomposes $N$ matrices $A_i\in\mathbb{R}^{m_i\times n}$, $i=1,\dots,N$, as $$A_i =U_i\Sigma_i V^T,$$ where the columns of $U_i\in\mathbb{R}^{m_i\times n}$ are referred to as *left basis vectors*, the diagonal elements of $\Sigma_i=\text{diag}(\sigma_{i,1},\dots,\sigma_{i,n})\in\mathbb{R}^{m_i\times n}$ as the *generalized singular values* and the columns of $V\in\mathbb{R}^{n\times n}$ with $\text{det}(V)\neq 0$ as the *right basis vectors*. Set $A:=[A_1^T, \dots, A_N^T]^T$ and $m:=[m_1,\dots,m_N]$, then call the HO-GSVD function as
+The HO-GSVD decomposes $N$ matrices $A_i\in\mathbb{R}^{m_i\times n}$, $i=1,\dots,N$, as $$A_i =U_i\Sigma_i V^T,$$ where the columns of $U_i\in\mathbb{R}^{m_i\times n}$ are referred to as *left basis vectors*, the diagonal elements of $\Sigma_i=\text{diag}(\sigma_{i,1},\dots,\sigma_{i,n})\in\mathbb{R}^{m_i\times n}$ as *generalized singular values* and the columns of $V\in\mathbb{R}^{n\times n}$ with $\text{det}(V)\neq 0$ as *right basis vectors*. Set $A:=[A_1^T, \dots, A_N^T]^T$ and $m:=[m_1,\dots,m_N]$, then call the HO-GSVD function as
 ```
 [U, S, V, Tau, taumin, taumax, iso_classes] = hogsvd(A, m, varargin);
 ```
