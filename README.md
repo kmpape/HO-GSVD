@@ -24,7 +24,7 @@ Ui=U(1+sum(m(1:i-1)):sum(m(1:i)),:);
 Si=S(1+n*(i-1):n*i,:);
 ```
 The function `hogsvd(A,m)` also returns the diagonal matrix `Tau`, which contains the eigenvalues $\tau_k$, $k=1,\dots,n$, of $T_\pi$, where $$T_\pi:=\frac{1}{N}\sum_{i=1}^N(Q_i^T Q_i+\pi I)^{-1},$$
-where the $Q_i$ are obtained from partitioning the left factor matrix of the thin QR factorization of $A$, i.e. from $QR=:A$ and $[Q_1^T,\dots,Q_N^T]^T:=Q$. 
+where the $Q_i$ are obtained from partitioning the left factor matrix of the thin QR factorization of $A$, i.e. from $QR=:A$ and $[Q_1^T,\dots,Q_N^T]^T:=Q$. Note that the present HO-GSVD implementation is based on the HO-CSD, i.e. `hogsvd(A,m)` calls `hocsd(Q,m)`.
 
 Indices for which $\tau_k=\tau_\text{max}$, where $\tau_\text{max}$ is returned in `taumax`, are associated with the *isolated HO-GSVD* subspace, and the corresponding $\sigma_{i,k}=1$ for some $A_i$ and $\sigma_{j,k}=0$ for all other $A_j$, $j\neq i$. The matrix associated with the non-zero $\sigma_{i,k}$ is listed in `iso_classes`. Indices for which $\tau_k=\tau_\text{min}$, where $\tau_\text{min}$ is returned in `taumin`, are associated with the *common HO-GSVD* subspace, and the corresponding $\sigma_{i,k}=1/\sqrt{N}$ for all $A_i$. See the accompanying paper *A Higher-Order Generalized Singular Value Decomposition for Rank Deficient Matrices* for further details.
 
@@ -33,7 +33,7 @@ See folder `examples` for example usages.
 # hocsd.m
 The HO-CSD decomposes $N$ matrices $Q_i\in\mathbb{R}^{m_i\times n}$, $i=1,\dots,N$, satisfying $Q_1^TQ_1+\dots+Q_N^TQ_N=I,$ as $$Q_i =U_i\Sigma_i Z^T,$$ where $U_i\in\mathbb{R}^{m_i\times n}$, $\Sigma_i=\text{diag}(\sigma_{i,1},\dots,\sigma_{i,n})\in\mathbb{R}^{m_i\times n}$ and $Z\in\mathbb{R}^{n\times n}$ with $Z^T Z=I$. Set $Q:=[Q_1^T, \dots, Q_N^T]^T$ and $m:=[m_1,\dots,m_N]$, then call the HO-CSD function as
 ```
-[U, S, Z, Tau, taumin, taumax, iso_classes] = hogsvd(Q, m, varargin);
+[U, S, Z, Tau, taumin, taumax, iso_classes] = hocsd(Q, m, varargin);
 ```
 The function `hocsd(Q,m)` returns the *concatenated* factor matrices. To access the factor matrices of some $A_i$, use
 ```
