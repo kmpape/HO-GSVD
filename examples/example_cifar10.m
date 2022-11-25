@@ -26,8 +26,7 @@ for i = 1:N
 end
 
 %% Call the HO-GSVD 
-[U, S, V, Q, R, Z, Tau, T, taumin, taumax, mpad, iso_classes] = hogsvd(A, N, m, n,...
-    'ACCELERATE', true);
+[U, S, V, Tau, taumin, taumax, iso_classes] = hogsvd(A, m);
 
 %% Plot the generalized singular values and the eigenvalues of T
 nplot = n;
@@ -44,17 +43,6 @@ for i = 1 : N
     xlim([1 nplot]);
     ylim([0 1]);
     title(sprintf('HO-GSVs of A_%d (%s)',i,classes{i}));
-end
-
-%% Visualise left basis vectors for selected images
-ij_pairs = [16,19,40,50];
-figure;
-for i=1:N
-    iso_inds_noti = find(iso_classes ~= i);
-    inds_Ui = 1+sum(m(1:i-1)):sum(m(1:i));
-    Ui = U(inds_Ui,:);
-    Ui(:,iso_inds_noti) = 0.0;
-    plot(Ui(ij_pairs(i),:)); hold on;
 end
 
 %% Visualise right basis vectors with largest weight for image j
@@ -100,8 +88,7 @@ for i = 1:N
 end
 
 %% Call the HO-GSVD on the new dataset
-[U_new, S_new, V_new, Q_new, R_new, Z_new, Tau_new, T_new, taumin_new, taumax_new, mpad_new, iso_classes_new] = hogsvd(Anew, N, m, n,...
-    'ACCELERATE', true);
+[U_new, S_new, V_new, Tau_new, taumin_new, taumax_new, iso_classes_new] = hogsvd(Anew, m);
 
 %% Plot the generalized singular values and the eigenvalues of T
 nplot = n;
