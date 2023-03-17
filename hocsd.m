@@ -15,17 +15,17 @@ function [U, S, Z, Tau, taumin, taumax, iso_classes] = hocsd(Q, m, varargin)
 % matrix Qi that has a unit generalised singular value.
 %
 % Optional keyword arguments (=default value):
-% ppi(=1):                  Controls the condition number of Qi'*Qi+ppi*I
+% ppi(=1e-3):               Controls the condition number of Qi'*Qi+ppi*I
 % ZEROTOL(=1e-14):          Tolerance for the geneneralised singular values
 % EPS_REL_ISO(=1e-6):       Tolerance for the isolated subspace
 % DISABLE_WARNINGS(=false): Disable warnings
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    warn_eps_iso = 1e-6; % hard-coded
-    warn_cond = 1e6; % hard-coded
+    WARN_EPS_ISO = 1e-6; % hard-coded
+    WARN_COND = 1e6; % hard-coded
     N = length(m);
     n = size(Q,2);
     if sum(m)<n
-        error('sum(m)=%d < n=%d. Rank(Q)=%d required.',sum(m),n,n)
+        error('sum(m)=%d < n=%d. Rank(Q)=%d required.',sum(m),n,n);
     end
     if size(Q,1) ~= sum(m)
         error('size(Q,1)=%d ~= sum(m)=%d.',size(Q,1),sum(m));
@@ -47,7 +47,7 @@ function [U, S, Z, Tau, taumin, taumax, iso_classes] = hocsd(Q, m, varargin)
         [~, Rhati] = qr([Qi; eye(n)*sqrt_ppi], 0);
         Rhat(:, 1+(i-1)*n:i*n) = inv(Rhati);
         if ~args.DISABLE_WARNINGS
-            if cond(Rhati)>=warn_cond, warning("For i=%d, cond(Rhati)=%e\n",i,cond(Rhati)), end
+            if cond(Rhati)>=WARN_COND, warning("For i=%d, cond(Rhati)=%e\n",i,cond(Rhati)), end
         end
     end
     [Z, sqrt_Tau, ~] = svd(Rhat, 0);
@@ -92,12 +92,12 @@ function [U, S, Z, Tau, taumin, taumax, iso_classes] = hocsd(Q, m, varargin)
         
         Z(:,ind_iso) = Z_iso_new;
         if ~args.DISABLE_WARNINGS
-            if norm(eye(n)-Z'*Z)>warn_eps_iso
+            if norm(eye(n)-Z'*Z)>WARN_EPS_ISO
                 warning('Rotated Z is not orthogonal, norm(eye(n)-Z^T*Z)=%e.',norm(eye(n)-Z'*Z,2))
             end
         end
     end
-    if norm(eye(n)-Z'*Z) > warn_eps_iso
+    if norm(eye(n)-Z'*Z) > WARN_EPS_ISO
         not_ortho=true;
     else
         not_ortho=false; 
@@ -165,10 +165,10 @@ function [Ai, row_inds] = get_mat_from_stacked(A, m, i)
 end
 
 function args = parse_args(varargin)
-    check_POS = @(x) (x>0);
+    check_POS = @(x) (x>=0);
     check_EPS = @(x) ((x>0) && (x<1));
     p = inputParser;
-    addParameter(p, 'ppi',          1,      check_POS);
+    addParameter(p, 'ppi',          1e-3,	check_POS);
     addParameter(p, 'ZEROTOL',      1e-14,	check_EPS);
     addParameter(p, 'EPS_REL_ISO',	1e-6,	check_EPS);
     addParameter(p, 'DISABLE_WARNINGS', false);

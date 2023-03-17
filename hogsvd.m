@@ -13,7 +13,7 @@ function [U, S, V, Tau, taumin, taumax, iso_classes] = hogsvd(A, m, varargin)
 %
 % Optional keyword arguments (=default):
 % RANK_TOL_A(=1e-14):       Rank tolerance for padding A
-% ppi(=1):                  See hocsd(.)
+% ppi(=1e-3):               See hocsd(.)
 % ZEROTOL(=1e-14):          See hocsd(.)
 % EPS_REL_ISO(=1e-6):       See hocsd(.)
 % DISABLE_WARNINGS(=false): Disable warnings
@@ -26,13 +26,12 @@ function [U, S, V, Tau, taumin, taumax, iso_classes] = hogsvd(A, m, varargin)
     args = parse_args(varargin{:});
     
     SA = svd(A);
-    rank_A = sum(SA > args.RANK_TOL_A);
-    rank_def_A = n - rank_A;
+    rank_def_A = n - sum(SA > args.RANK_TOL_A);
     if rank_def_A == 0
         Apad = A;
     else
         if ~args.DISABLE_WARNINGS
-            warning('Provided rank-deficient A w. rank(A)=%d<n=%d. Padding A.', rank_A, n);
+            warning('Provided rank-deficient A w. rank(A)=%d<n=%d. Padding A.', n-rank_def_A, n);
         end
         [~, ~, VA] = svd(A);
         Apad = [A; VA(:,end+1-rank_def_A:end)'];
@@ -49,13 +48,13 @@ function [U, S, V, Tau, taumin, taumax, iso_classes] = hogsvd(A, m, varargin)
 end
 
 function args = parse_args(varargin)
-    check_POS = @(x) (x>0);
+    check_POS = @(x) (x>=0);
     check_EPS = @(x) ((x>0) && (x<1));
     p = inputParser;
-    addParameter(p, 'RANK_TOL_A', 1e-14, check_EPS);
-    addParameter(p, 'ppi', 1, check_POS);
-    addParameter(p, 'ZEROTOL', 1e-14, check_EPS);
-    addParameter(p, 'EPS_REL_ISO',	1e-6, check_EPS);
+    addParameter(p, 'RANK_TOL_A', 1e-14, check_EPS); % ^= epsilon_0
+    addParameter(p, 'ppi', 1e-3, check_POS);
+    addParameter(p, 'ZEROTOL', 1e-14, check_EPS);  % ^= epsilon_2
+    addParameter(p, 'EPS_REL_ISO',	1e-6, check_EPS); % ^= epsilon_1
     addParameter(p, 'DISABLE_WARNINGS', false);
     parse(p, varargin{:});
     args = p.Results;
