@@ -14,7 +14,7 @@ If you use the HO-GSVD for published work, we encourage you to cite the accompan
 ```
 
 # hogsvd.m
-The HO-GSVD decomposes $N$ matrices $A_i\in\mathbb{R}^{m_i\times n}$, $i=1,\dots,N$, as $$A_i =U_i\Sigma_i V^T,$$ where the columns of $U_i\in\mathbb{R}^{m_i\times n}$ are referred to as *left basis vectors*, the diagonal elements of $\Sigma_i=\text{diag}(\sigma_{i,1},\dots,\sigma_{i,n})\in\mathbb{R}^{m_i\times n}$ as *generalized singular values* and the columns of $V\in\mathbb{R}^{n\times n}$ with $\text{det}(V)\neq 0$ as *right basis vectors*. Set $A:=[A_1^T, \dots, A_N^T]^T$ and $m:=[m_1,\dots,m_N]$, then call the HO-GSVD function as
+The HO-GSVD decomposes $N$ matrices $A_i\in\mathbb{R}^{m_i\times n}$, $i=1,\dots,N$, as $$A_i =U_i\Sigma_i V^T,$$ where the columns of $U_i\in\mathbb{R}^{m_i\times n}$ are referred to as *left basis vectors*, the diagonal elements of $\Sigma_i=\text{diag}(\sigma_{i,1},\dots,\sigma_{i,n})\in\mathbb{R}^{n\times n}$ as *generalized singular values* and the columns of $V\in\mathbb{R}^{n\times n}$ with $\text{det}(V)\neq 0$ as *right basis vectors*. Set $A:=[A_1^T, \dots, A_N^T]^T$ and $m:=[m_1,\dots,m_N]$, then call the HO-GSVD function as
 ```
 [U, S, V, Tau, taumin, taumax, iso_classes] = hogsvd(A, m, varargin);
 ```
@@ -31,7 +31,7 @@ Indices for which $\tau_k=\tau_\text{max}$, where $\tau_\text{max}$ is returned 
 See folder `examples` for example usages.
 
 # hocsd.m
-The HO-CSD decomposes $N$ matrices $Q_i\in\mathbb{R}^{m_i\times n}$, $i=1,\dots,N$, satisfying $Q_1^TQ_1+\dots+Q_N^TQ_N=I,$ as $$Q_i =U_i\Sigma_i Z^T,$$ where $U_i\in\mathbb{R}^{m_i\times n}$, $\Sigma_i=\text{diag}(\sigma_{i,1},\dots,\sigma_{i,n})\in\mathbb{R}^{m_i\times n}$ and $Z\in\mathbb{R}^{n\times n}$ with $Z^T Z=I$. Set $Q:=[Q_1^T, \dots, Q_N^T]^T$ and $m:=[m_1,\dots,m_N]$, then call the HO-CSD function as
+The HO-CSD decomposes $N$ matrices $Q_i\in\mathbb{R}^{m_i\times n}$, $i=1,\dots,N$, satisfying $Q_1^TQ_1+\dots+Q_N^TQ_N=I,$ as $$Q_i =U_i\Sigma_i Z^T,$$ where $U_i\in\mathbb{R}^{m_i\times n}$, $\Sigma_i=\text{diag}(\sigma_{i,1},\dots,\sigma_{i,n})\in\mathbb{R}^{n\times n}$ and $Z\in\mathbb{R}^{n\times n}$ with $Z^T Z=I$. Set $Q:=[Q_1^T, \dots, Q_N^T]^T$ and $m:=[m_1,\dots,m_N]$, then call the HO-CSD function as
 ```
 [U, S, Z, Tau, taumin, taumax, iso_classes] = hocsd(Q, m, varargin);
 ```
